@@ -6,13 +6,17 @@ metrics to reports/modeling/metrics.json, and generates 5 publication-quality
 visualizations in reports/modeling/figures/.
 """
 import os
+import sys
 import json
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import pandas as pd
 from sklearn.dummy import DummyClassifier
-from sklearn.metrics import precision_recall_curve, roc_curve
+from sklearn.metrics import average_precision_score, precision_recall_curve, roc_auc_score, roc_curve
+
+# Ensure repo root is on sys.path
+sys.path.insert(0, os.path.abspath('.'))
 
 from src.modeling import (
     build_logistic_regression_pipeline,

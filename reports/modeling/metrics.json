@@ -1,0 +1,61 @@
+{
+    "dataset_summary": {
+        "total_encounters": 101763,
+        "train_encounters": 81670,
+        "test_encounters": 20093,
+        "features_used": 43,
+        "test_positive_base_rate": 0.1092
+    },
+    "dummy_classifier": {
+        "total_test_samples": 20093,
+        "positive_support": 2195,
+        "negative_support": 17898,
+        "true_negatives": 17898,
+        "false_positives": 0,
+        "false_negatives": 2195,
+        "true_positives": 0,
+        "accuracy": 0.8908,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1_score": 0.0,
+        "roc_auc": 0.5,
+        "pr_auc": 0.1092,
+        "confusion_matrix": [
+            [
+                17898,
+                0
+            ],
+            [
+                2195,
+                0
+            ]
+        ],
+        "model_name": "DummyClassifier (Most Frequent)"
+    },
+    "logistic_regression": {
+        "total_test_samples": 20093,
+        "positive_support": 2195,
+        "negative_support": 17898,
+        "true_negatives": 12086,
+        "false_positives": 5812,
+        "false_negatives": 1048,
+        "true_positives": 1147,
+        "accuracy": 0.6586,
+        "precision": 0.1648,
+        "recall": 0.5226,
+        "f1_score": 0.2506,
+        "roc_auc": 0.6435,
+        "pr_auc": 0.1887,
+        "confusion_matrix": [
+            [
+                12086,
+                5812
+            ],
+            [
+                1048,
+                1147
+            ]
+        ],
+        "model_name": "LogisticRegression (Balanced Weights)"
+    }
+}
