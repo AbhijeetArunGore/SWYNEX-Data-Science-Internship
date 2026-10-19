@@ -12,9 +12,18 @@ This repository contains the end-to-end data science work completed during my in
 ## 📌 Project Navigation
 - 📓 **Task 1 Notebook**: [`SWYNEX_Data_Preparation.ipynb`](SWYNEX_Data_Preparation.ipynb) — Ingestion, quality auditing, contextual imputation, and relational ID mapping.
 - 📓 **Task 2 Notebook**: [`notebooks/02_exploratory_data_analysis.ipynb`](notebooks/02_exploratory_data_analysis.ipynb) — Comprehensive distribution profiling, bivariate risk analysis, hypothesis testing, and anti-leakage governance.
-- 📄 **Executive EDA Report**: [`reports/eda/eda_summary_report.md`](reports/eda/eda_summary_report.md) — Clinical findings and data science decision matrix.
-- 📚 **Data Dictionary**: [`docs/DATA_DICTIONARY.md`](docs/DATA_DICTIONARY.md) — 54-feature clinical schema documentation.
-- 📊 **Visual Artifacts**: [`reports/eda/figures/`](reports/eda/figures/) — Publication-quality generated figures.
+- 📓 **Task 3 Notebook**: [`notebooks/03_modeling_and_evaluation.ipynb`](notebooks/03_modeling_and_evaluation.ipynb) — Leak-free patient-grouped split, balanced logistic regression, confusion matrix audit, and discrimination curves.
+- 📄 **Executive Analytical Reports**:
+  - Task 2 EDA: [`reports/eda/eda_summary_report.md`](reports/eda/eda_summary_report.md)
+  - Task 3 Modeling: [`reports/modeling/model_evaluation_report.md`](reports/modeling/model_evaluation_report.md)
+- 📚 **Documentation & Submission**:
+  - Clinical Schema: [`docs/DATA_DICTIONARY.md`](docs/DATA_DICTIONARY.md)
+  - Task 2 Presentation Guide: [`docs/LINKEDIN_DEMO_TASK2.md`](docs/LINKEDIN_DEMO_TASK2.md)
+  - Task 3 Presentation Guide: [`docs/LINKEDIN_DEMO_TASK3.md`](docs/LINKEDIN_DEMO_TASK3.md)
+- 📊 **Visual Artifacts**:
+  - EDA Figures: [`reports/eda/figures/`](reports/eda/figures/)
+  - Modeling Figures: [`reports/modeling/figures/`](reports/modeling/figures/)
+- 📈 **Machine-Readable Metrics**: [`reports/modeling/metrics.json`](reports/modeling/metrics.json)
 
 ---
 
@@ -31,30 +40,34 @@ SWYNEX-Data-Preparation/
 │       ├── diabetic_data_clean.csv      # Cleaned baseline dataset (101,763 x 54, 0 nulls)
 │       └── diabetic_data_clean.parquet  # High-performance Parquet format
 ├── docs/
-│   └── DATA_DICTIONARY.md               # Clinical feature definitions & categories
+│   ├── DATA_DICTIONARY.md               # Clinical feature definitions & categories
+│   ├── LINKEDIN_DEMO_TASK2.md           # Task 2 LinkedIn showcase & demo script
+│   └── LINKEDIN_DEMO_TASK3.md           # Task 3 LinkedIn showcase & demo script
 ├── notebooks/
-│   └── 02_exploratory_data_analysis.ipynb # Task 2 Main Interactive EDA Notebook
+│   ├── 02_exploratory_data_analysis.ipynb # Task 2 Main Interactive EDA Notebook
+│   └── 03_modeling_and_evaluation.ipynb # Task 3 Main Modeling & Evaluation Notebook
 ├── reports/
-│   └── eda/
-│       ├── eda_summary_report.md        # Executive Task 2 Analytical Report
-│       └── figures/                     # Exported 300-DPI visual artifacts
-│           ├── 01_target_distribution.png
-│           ├── 02_numerical_distributions.png
-│           ├── 03_prior_inpatient_utilization.png
-│           ├── 04_discharge_disposition_risk.png
-│           ├── 05_correlation_heatmap.png
-│           └── 06_hba1c_and_medchange.png
+│   ├── eda/
+│   │   ├── eda_summary_report.md        # Executive Task 2 Analytical Report
+│   │   └── figures/                     # Exported 300-DPI EDA visual artifacts
+│   └── modeling/
+│       ├── model_evaluation_report.md   # Executive Task 3 Modeling & Evaluation Report
+│       ├── metrics.json                 # Pinned machine-readable test set metrics
+│       └── figures/                     # Exported 300-DPI modeling figures
 ├── scripts/
 │   ├── compute_eda_stats.py             # Empirical statistics calculation script
-│   ├── generate_eda_figures.py          # Automated figure generation script
+│   ├── generate_eda_figures.py          # Automated EDA figure generation script
+│   ├── generate_modeling_artifacts.py   # Automated modeling training & artifact script
 │   └── validate_dataset.py              # Task 1 dataset integrity validator
 ├── src/
 │   ├── __init__.py                      # Package initialization
 │   ├── utils.py                         # Task 1 data preparation functions
-│   └── eda.py                           # Task 2 modular EDA & statistical testing utilities
+│   ├── eda.py                           # Task 2 modular EDA & statistical testing utilities
+│   └── modeling.py                      # Task 3 modular modeling pipeline & evaluation functions
 ├── tests/
 │   ├── test_preprocessing.py            # Task 1 unit tests
-│   └── test_eda.py                      # Task 2 EDA functions unit test suite
+│   ├── test_eda.py                      # Task 2 EDA functions unit test suite
+│   └── test_modeling.py                 # Task 3 modeling pipeline & metrics unit tests
 ├── SWYNEX_Data_Preparation.ipynb        # Task 1 Main Data Preparation Notebook
 ├── requirements.txt                     # Pinned project dependencies
 └── README.md                            # Comprehensive project documentation
@@ -134,9 +147,73 @@ graph TD
 
 Before proceeding to Task 3 (Predictive Modeling), the following data governance requirements are established:
 1. **Exclude Expired Patients**: Remove 1,642 encounters where `discharge_disposition_id` $\in \{11, 19, 20, 21\}$.
-2. **Enforce Grouped Cross-Validation**: Split data strictly by `patient_nbr` using `GroupKFold` to prevent patient records from leaking across folds.
+2. **Enforce Grouped Cross-Validation**: Split data strictly by `patient_nbr` using `GroupKFold` or `GroupShuffleSplit` to prevent patient records from leaking across folds.
 3. **Segregate Feature Timing**: Distinguish admission-time variables (demographics, prior visits) from pre-discharge variables (total stay, discharge destination).
-4. **Target Metric Selection**: Optimize models for **PR-AUC** and recall at calibrated risk cutoffs rather than accuracy.
+4. **Target Metric Selection**: Optimize models for **PR-AUC** and recall at calibrated risk cutoffs rather than raw accuracy.
+
+---
+
+# 🤖 Task 3: Modeling and Evaluation
+
+### Objective & Problem Formulation
+Task 3 establishes an interpretable, reproducible machine learning baseline to predict **30-day early hospital readmission** for diabetic inpatients:
+- **Binary Target Formulation**:
+  - **Positive Class (`1`)**: `readmitted == '<30'` (11,357 encounters, **11.16%** base rate).
+  - **Negative Class (`0`)**: `readmitted` $\in$ `{NO, >30}` (90,406 encounters, **88.84%**).
+- **Clinical Meaning**: Predicts whether an encounter is followed by a recorded readmission within 30 days of discharge. `NO` indicates no recorded readmission within the monitored hospital system, not proof that the patient was never readmitted.
+
+```mermaid
+graph TD
+    A[Cleaned Inpatient Dataset: 101,763 rows] --> B[Feature Audit & Anti-Leakage Screening]
+    B -->|Drop IDs, target, discharge_disposition| C[43 Input Features]
+    C --> D[GroupShuffleSplit on patient_nbr: 80/20]
+    D --> E[Training Cohort: 81,670 rows / 57,212 patients]
+    D --> F[Held-Out Test Cohort: 20,093 rows / 14,303 patients]
+    E --> G[Scikit-Learn Pipeline: ColumnTransformer + LogisticRegression]
+    G --> H[Model Evaluation on Unseen Test Cohort]
+    F --> H
+    H --> I[Confusion Matrix, PR-AUC, ROC-AUC, Risk Drivers]
+```
+
+### Strict Anti-Leakage Implementation
+1. **Patient-Grouped Holdout Split**: Encounters are partitioned strictly by `patient_nbr` using `GroupShuffleSplit(n_splits=1, test_size=0.20, random_state=42)`:
+   - **Training Set**: 81,670 encounters across 57,212 unique patients.
+   - **Held-Out Test Set**: 20,093 encounters across 14,303 unique patients.
+   - **Zero Patient Overlap**: Exactly 0 patients overlap between train and test sets, preventing optimistic data leakage from recurring patients.
+2. **Leakage Feature Pruning**: Deliberately excluded post-discharge terminal event variables (`discharge_disposition_id` / `discharge_disposition_desc` containing `Expired`), ensuring the model uses only information available during the hospital encounter.
+3. **Identifiers Excluded**: `encounter_id` and `patient_nbr` are excluded from model inputs.
+
+### Preprocessing & Architecture
+- **Pipeline Encapsulation**: Fitted exclusively on training data using `ColumnTransformer`:
+  - **9 Numerical Features**: Standardized with `StandardScaler` (median-imputed).
+  - **34 Categorical Features**: One-hot encoded with `OneHotEncoder(handle_unknown='ignore')`.
+- **Baseline Benchmark**: `DummyClassifier(strategy='most_frequent')`.
+- **Primary Model**: `LogisticRegression(max_iter=1000, class_weight='balanced', random_state=42)`.
+
+### Empirical Test Set Results (Held-Out Test Cohort: N = 20,093)
+
+| Model Architecture | Accuracy | Precision | Recall (Sensitivity) | F1-Score | ROC-AUC | PR-AUC (Average Precision) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **DummyClassifier** (Majority Class) | **89.08%** | 0.00% | 0.00% | 0.0000 | 0.5000 | 0.1092 |
+| **Balanced Logistic Regression** | **65.86%** | **16.48%** | **52.26%** | **0.2506** | **0.6435** | **0.1887** |
+
+> **Key Analytical Takeaway**: While the dummy classifier demonstrates deceptively high accuracy (89.08%), it fails to detect a single readmitted patient (Recall = 0.0%). Balanced Logistic Regression successfully identifies **52.26% of all true readmissions** (1,147 patients) and achieves a **+72.8% relative gain in PR-AUC** (0.1887 vs 0.1092 baseline).
+
+### Confusion Matrix Breakdown (Held-Out Test Cohort)
+
+| Metric | Count | Clinical & Operational Interpretation |
+| :--- | :---: | :--- |
+| **True Negatives (TN)** | **12,086** | Patients correctly identified as low risk; avoiding unnecessary follow-up costs. |
+| **False Positives (FP)** | **5,812** | False alarms; patients receive low-cost transitional check-ins (e.g., pharmacist phone calls). |
+| **False Negatives (FN)** | **1,048** | Readmissions missed by the linear baseline. |
+| **True Positives (TP)** | **1,147** | High-risk patients successfully flagged for discharge planning interventions. |
+
+- **Precision vs. Recall Trade-Off**: With ~10.9% test prevalence, `class_weight='balanced'` prioritizes sensitivity over precision. In hospital operations, a false alarm triggers a harmless, low-cost outreach, whereas a False Negative may leave a deteriorating patient unmonitored at home.
+
+### Top Risk Drivers (Standardized Log-Odds Coefficients)
+- **`number_inpatient` ($\beta = +0.3517$)**: The strongest positive predictor. Prior hospitalizations significantly elevate readmission risk.
+- **`number_diagnoses` ($\beta = +0.0933$) & `age_midpoint` ($\beta = +0.0777$)**: Reflect chronic multi-morbidity and geriatric frailty.
+- **Specialty Flags**: Inpatient encounters managed by `Allergy and Immunology` (+1.03) and `Hematology` (+0.98) show elevated readmission risk, reflecting complex immune and oncological disorders.
 
 ---
 
@@ -152,27 +229,37 @@ cd SWYNEX-Data-Preparation
 pip install -r requirements.txt
 ```
 
-### Run Unit Tests
+### Run Complete Unit Test Suite
 ```bash
-# Run complete test suite across Task 1 and Task 2
+# Run all 17 unit tests across Task 1, Task 2, and Task 3
 python -m pytest tests/
 ```
 
-### Generate Visual Artifacts
+### Generate Visual & Metric Artifacts
 ```bash
-# Generate all publication-quality figures into reports/eda/figures/
+# Generate EDA figures into reports/eda/figures/
 python scripts/generate_eda_figures.py
+
+# Generate modeling figures and metrics.json into reports/modeling/
+python scripts/generate_modeling_artifacts.py
 ```
 
-### Execute the EDA Notebook
+### Execute Interactive Notebooks
 ```bash
-# Launch Jupyter Notebook
+# Task 1: Data Preparation
+jupyter notebook SWYNEX_Data_Preparation.ipynb
+
+# Task 2: Exploratory Data Analysis
 jupyter notebook notebooks/02_exploratory_data_analysis.ipynb
+
+# Task 3: Modeling and Evaluation
+jupyter notebook notebooks/03_modeling_and_evaluation.ipynb
 ```
 
 ---
 
-## ⚠️ Limitations
+## ⚠️ Limitations & Clinical Disclaimer
+- **Educational Baseline**: This model is built as an educational demonstration of machine learning evaluation under class imbalance. It is **not a clinically validated diagnostic tool** and should not be used for direct patient triage or hospital policy decisions.
 - **Historical Observational Data**: Collected from 1999–2008 across 130 US hospitals; does not reflect modern diabetes pharmaceuticals (e.g. GLP-1 agonists, SGLT2 inhibitors).
 - **No Causal Inference**: Associations reflect empirical patterns and cannot be interpreted as direct causal mechanisms.
 - **Billing Code Proxies**: Diagnoses rely on ICD-9 administrative codes subject to billing incentives.
