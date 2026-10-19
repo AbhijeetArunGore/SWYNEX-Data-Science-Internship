@@ -16,10 +16,7 @@ This repository contains the end-to-end data science work completed during my in
 - 📄 **Executive Analytical Reports**:
   - Task 2 EDA: [`reports/eda/eda_summary_report.md`](reports/eda/eda_summary_report.md)
   - Task 3 Modeling: [`reports/modeling/model_evaluation_report.md`](reports/modeling/model_evaluation_report.md)
-- 📚 **Documentation & Submission**:
-  - Clinical Schema: [`docs/DATA_DICTIONARY.md`](docs/DATA_DICTIONARY.md)
-  - Task 2 Presentation Guide: [`docs/LINKEDIN_DEMO_TASK2.md`](docs/LINKEDIN_DEMO_TASK2.md)
-  - Task 3 Presentation Guide: [`docs/LINKEDIN_DEMO_TASK3.md`](docs/LINKEDIN_DEMO_TASK3.md)
+- 📚 **Clinical Schema Documentation**: [`docs/DATA_DICTIONARY.md`](docs/DATA_DICTIONARY.md) — 54-feature clinical schema documentation.
 - 📊 **Visual Artifacts**:
   - EDA Figures: [`reports/eda/figures/`](reports/eda/figures/)
   - Modeling Figures: [`reports/modeling/figures/`](reports/modeling/figures/)
@@ -40,9 +37,7 @@ SWYNEX-Data-Preparation/
 │       ├── diabetic_data_clean.csv      # Cleaned baseline dataset (101,763 x 54, 0 nulls)
 │       └── diabetic_data_clean.parquet  # High-performance Parquet format
 ├── docs/
-│   ├── DATA_DICTIONARY.md               # Clinical feature definitions & categories
-│   ├── LINKEDIN_DEMO_TASK2.md           # Task 2 LinkedIn showcase & demo script
-│   └── LINKEDIN_DEMO_TASK3.md           # Task 3 LinkedIn showcase & demo script
+│   └── DATA_DICTIONARY.md               # Clinical feature definitions & categories
 ├── notebooks/
 │   ├── 02_exploratory_data_analysis.ipynb # Task 2 Main Interactive EDA Notebook
 │   └── 03_modeling_and_evaluation.ipynb # Task 3 Main Modeling & Evaluation Notebook

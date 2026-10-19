@@ -44,4 +44,24 @@ ehthumbs.db
 desktop.ini
 *.log
 .env
-.env.local
+.env.*
+*.env
+
+# Secrets & Credentials
+*secret*
+*credential*
+*.pem
+*.key
+*.token
+
+# Local Submission Notes & Presentation Drafts (Keep local only)
+notes/
+docs/LINKEDIN_*
+*LINKEDIN*
+*demo*
+*submission*
+
+# Scratch & Temporary Scripts
+scripts/build_*.py
+scratch/
+tmp/
