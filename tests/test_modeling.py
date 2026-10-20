@@ -117,3 +117,36 @@ def test_save_metrics_to_json():
     finally:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
+
+
+def test_patient_grouped_split_zero_patient_overlap(sample_clinical_df):
+    """Verify that multiple encounters per patient are strictly segregated without leakage."""
+    X, y, groups, num_cols, cat_cols = prepare_feature_matrix(sample_clinical_df)
+    X_train, X_test, y_train, y_test = create_patient_grouped_split(
+        X, y, groups, test_size=0.3, random_state=42
+    )
+    train_patients = set(groups.iloc[X_train.index])
+    test_patients = set(groups.iloc[X_test.index])
+
+    assert len(train_patients) > 0
+    assert len(test_patients) > 0
+    assert train_patients.isdisjoint(test_patients), "Patient leakage found between train and test sets!"
+
+
+def test_pipeline_handles_unseen_categories(sample_clinical_df):
+    """Verify that OneHotEncoder handles unknown categories at test time without crashing."""
+    X, y, groups, num_cols, cat_cols = prepare_feature_matrix(sample_clinical_df)
+    pipe = build_logistic_regression_pipeline(num_cols, cat_cols, random_state=42)
+    pipe.fit(X, y)
+
+    # Create test sample with unseen categorical values
+    unseen_sample = X.iloc[[0]].copy()
+    unseen_sample['race'] = 'BrandNewUnseenRace'
+    unseen_sample['admission_type_desc'] = 'BrandNewAdmissionType'
+
+    preds = pipe.predict(unseen_sample)
+    probs = pipe.predict_proba(unseen_sample)
+
+    assert len(preds) == 1
+    assert probs.shape == (1, 2)
+    assert 0.0 <= probs[0, 1] <= 1.0
