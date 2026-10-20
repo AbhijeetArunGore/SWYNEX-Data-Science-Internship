@@ -1,32 +1,93 @@
-# SWYNEX Technologies — Clinical Data Science Pipeline
+# SWYNEX Technologies — Clinical Data Science Capstone
+## End-to-End Healthcare Readmission Analysis: Predicting 30-Day Hospital Readmissions in Inpatient Diabetic Encounters
 
-[![CI Pipeline](https://github.com/AbhijeetArunGore/SWYNEX-Data-Preparation/actions/workflows/test.yml/badge.svg)](https://github.com/AbhijeetArunGore/SWYNEX-Data-Preparation/actions)
+[![CI Pipeline](https://github.com/AbhijeetArunGore/SWYNEX-Data-Science-Internship/actions/workflows/test.yml/badge.svg)](https://github.com/AbhijeetArunGore/SWYNEX-Data-Science-Internship/actions)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Tests: 17 Passed](https://img.shields.io/badge/tests-17%20passed-success.svg)](tests/)
 
-This repository contains the end-to-end data science work completed during my internship at **SWYNEX Technologies**. The project is structured into modular internship tasks investigating diabetic inpatient encounters across 130 US hospitals (1999–2008) sourced from the **UCI Machine Learning Repository**.
+This repository presents the capstone data science investigation completed during my internship at **SWYNEX Technologies**. The project investigates **101,763 diabetic inpatient hospital encounters** across 130 US hospitals (1999–2008) sourced from the **UCI Machine Learning Repository**. The project connects data preparation, exploratory data analysis, anti-leakage governance, and predictive modeling into an end-to-end clinical case study.
+
+---
+
+## 📖 Executive Project Overview (For Non-Technical & Technical Readers)
+
+### The Problem
+*Can historical hospital encounter data help identify inpatient encounters associated with an early readmission within 30 days of discharge, and what are the limitations of making that prediction?*
+
+### Why It Matters
+Hospital readmissions within 30 days represent a major challenge for modern healthcare systems. Under the **Hospital Readmissions Reduction Program (HRRP)**, hospitals face financial penalties for elevated readmission rates. For diabetic patients, early readmission frequently signals acute transitional care breakdown, post-discharge glycemic volatility, or gaps in patient self-management. Identifying high-risk encounters prior to discharge allows clinical teams to deploy targeted, low-cost preventive interventions (such as pharmacist medication reconciliation or nurse follow-up phone calls).
+
+### The Data Analyzed
+- **Source**: UCI Diabetes 130-US Hospitals dataset (1999–2008).
+- **Scope**: 101,763 cleaned inpatient admissions across **71,515 unique patients** and **130 hospital facilities**.
+- **Unit of Observation**: Each record represents a single inpatient hospitalization stay (lasting between 1 and 14 days).
+- **Target Outcome**: Binary early readmission:
+  - **Positive Class (`1`)**: Readmitted within 30 days (`<30`), comprising **11,357 encounters (11.16%)**.
+  - **Negative Class (`0`)**: No recorded readmission within 30 days (`NO` or `>30`), comprising **90,406 encounters (88.84%)**.
+
+### The Approach
+1. **Task 1 (Data Preparation)**: Converted EHR sentinel missing values (`'?'`), pruned uninformative extreme-missing features (`weight` >96%), retained informative administrative missingness (`payer_code`, `medical_specialty`), collapsed 900+ raw ICD-9 codes into 9 clinical categories, and resolved relational lookups into clean text labels.
+2. **Task 2 (Exploratory Data Analysis)**: Evaluated class imbalance (~8:1), tested clinical hypotheses (Mann-Whitney U, Pearson Chi-Square), analyzed medication titration patterns, and established anti-leakage rules.
+3. **Task 3 (Modeling & Evaluation)**: Implemented strict patient-level grouped validation (`GroupShuffleSplit` on `patient_nbr` ensuring **0 patient overlap**), pruned terminal discharge leakage, and benchmarked a majority-class `DummyClassifier` against a balanced `LogisticRegression` pipeline.
+4. **Task 4 (Final Case Study)**: Synthesized all stages into an integrated, reproducible capstone case study with dual-audience documentation, trade-off audits, and transparent limitations.
+
+### Key Empirical Findings
+1. **Prior Hospital Admissions are the Dominant Risk Signal**: Readmission risk rises monotonically from **8.44%** for patients with 0 prior inpatient stays to **12.92%** at 1 visit, **20.29%** at 3 visits, and **34.58%** at 6+ visits (Mann-Whitney $U = 401,064,764, p < 10^{-15}$). In multivariable regression, `number_inpatient` had the highest positive coefficient ($\beta = +0.3517$).
+2. **The "Accuracy Trap" in Imbalanced Healthcare Data**: An ~8:1 negative-to-positive ratio means a naive model that blindly predicts "no readmission" for everyone achieves **89.08% accuracy**, yet fails to detect a single readmitted patient (Recall = 0.0%).
+3. **Medication Titration Reflects Glycemic Instability**: In-hospital diabetes drug adjustments (`change` = Ch) were associated with a **12.24%** readmission rate compared to **10.23%** for stable regimens ($\chi^2 = 215.94, p = 1.289 \times 10^{-47}$).
+4. **Post-Acute Care Vulnerability & Terminal Leakage**: Patients discharged to rehabilitation centers had a **27.71%** 30-day readmission rate. Conversely, 1,642 deceased patients (`Expired`) showed an exact **0.00%** readmission rate, proving that terminal discharge status must be excluded to prevent artificial target leakage.
+5. **Multi-Morbidity Compounds Risk**: Diagnosis count (`number_diagnoses`, $\beta = +0.0933$) and age (`age_midpoint`, $\beta = +0.0777$) jointly elevate readmission risk.
+
+### Model Performance on Unseen Test Data (N = 20,093 Encounters, 14,303 Patients)
+
+| Model Architecture | Accuracy | Precision | Recall (Sensitivity) | F1-Score | ROC-AUC | PR-AUC (Average Precision) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **DummyClassifier** (Majority Class) | **89.08%** | 0.00% | 0.00% | 0.0000 | 0.5000 | 0.1092 |
+| **Balanced Logistic Regression** | **65.86%** | **16.48%** | **52.26%** | **0.2506** | **0.6435** | **0.1887** |
+
+> **Key Performance Takeaway**:  
+> **The model identified 1,147 of the 2,195 early-readmission encounters in the test set, but it also incorrectly flagged 5,812 encounters as high risk.**
+
+### What the Results Mean (Operational Trade-Off)
+Because early readmissions are relatively uncommon (10.92% test base rate), our model uses `class_weight='balanced'` to prioritize sensitivity over precision. 
+- **1,147 True Positives**: Over half (52.26%) of all patients who will be readmitted within 30 days are successfully caught.
+- **5,812 False Positives (False Alarms)**: When the model flags a patient as high risk, approximately **1 in 6** is actually readmitted (16.48% precision).
+- **Operational Feasibility**: In clinical operations, a false alarm triggers a low-cost, harmless intervention (e.g. a 5-minute phone call from a transitional care nurse or pharmacist medication review). In contrast, missing a deteriorating patient (False Negative) can lead to emergency hospitalization. Thus, accepting false alarms to recover 1,147 vulnerable patients is an operationally sensible trade-off.
+
+### Transparent Limitations
+- **Educational Baseline**: This model is an educational demonstration. It is **not a clinically approved decision-support device** and must not be used for bedside triage or clinical decision-making.
+- **Historical Observational Data**: Collected from 1999–2008 across 130 US hospitals; does not reflect modern diabetes pharmaceuticals (e.g. GLP-1 receptor agonists, SGLT2 inhibitors) or continuous glucose monitors.
+- **Correlation vs. Causation**: Regression coefficients represent empirical associations in observational EHR data, not causal medical mechanisms.
+- **Unrecorded Readmissions**: The target variable reflects readmissions within participating hospitals. Readmissions to independent, external facilities were classified as `NO`.
 
 ---
 
 ## 📌 Project Navigation
-- 📓 **Task 1 Notebook**: [`SWYNEX_Data_Preparation.ipynb`](SWYNEX_Data_Preparation.ipynb) — Ingestion, quality auditing, contextual imputation, and relational ID mapping.
-- 📓 **Task 2 Notebook**: [`notebooks/02_exploratory_data_analysis.ipynb`](notebooks/02_exploratory_data_analysis.ipynb) — Comprehensive distribution profiling, bivariate risk analysis, hypothesis testing, and anti-leakage governance.
-- 📓 **Task 3 Notebook**: [`notebooks/03_modeling_and_evaluation.ipynb`](notebooks/03_modeling_and_evaluation.ipynb) — Leak-free patient-grouped split, balanced logistic regression, confusion matrix audit, and discrimination curves.
+
+- 📓 **Interactive Notebooks**:
+  - **Task 1 Notebook**: [`notebooks/01_data_preparation.ipynb`](notebooks/01_data_preparation.ipynb) ([`SWYNEX_Data_Preparation.ipynb`](SWYNEX_Data_Preparation.ipynb)) — Ingestion, auditing, imputation, and ICD-9 mapping.
+  - **Task 2 Notebook**: [`notebooks/02_exploratory_data_analysis.ipynb`](notebooks/02_exploratory_data_analysis.ipynb) — Distribution profiling, bivariate risk analysis, hypothesis testing, and leakage governance.
+  - **Task 3 Notebook**: [`notebooks/03_modeling_and_evaluation.ipynb`](notebooks/03_modeling_and_evaluation.ipynb) — Patient-grouped holdout, balanced logistic regression, confusion matrix audit, and discrimination curves.
+  - **Task 4 Final Case Study**: [`notebooks/04_final_data_science_case_study.ipynb`](notebooks/04_final_data_science_case_study.ipynb) — Complete integrated capstone case study connecting Stages A through H.
 - 📄 **Executive Analytical Reports**:
-  - Task 2 EDA: [`reports/eda/eda_summary_report.md`](reports/eda/eda_summary_report.md)
-  - Task 3 Modeling: [`reports/modeling/model_evaluation_report.md`](reports/modeling/model_evaluation_report.md)
+  - **Final Capstone Case Study Report**: [`reports/final_case_study_report.md`](reports/final_case_study_report.md) — Comprehensive end-to-end synthesis.
+  - **Task 2 EDA Summary Report**: [`reports/eda/eda_summary_report.md`](reports/eda/eda_summary_report.md) — Clinical EDA findings and statistical tests.
+  - **Task 3 Model Evaluation Report**: [`reports/modeling/model_evaluation_report.md`](reports/modeling/model_evaluation_report.md) — Baseline comparison and coefficient audit.
 - 📚 **Clinical Schema Documentation**: [`docs/DATA_DICTIONARY.md`](docs/DATA_DICTIONARY.md) — 54-feature clinical schema documentation.
 - 📊 **Visual Artifacts**:
-  - EDA Figures: [`reports/eda/figures/`](reports/eda/figures/)
-  - Modeling Figures: [`reports/modeling/figures/`](reports/modeling/figures/)
+  - Final Case Study Figures: [`reports/figures/`](reports/figures/)
+  - EDA Diagnostic Figures: [`reports/eda/figures/`](reports/eda/figures/)
+  - Modeling Diagnostic Figures: [`reports/modeling/figures/`](reports/modeling/figures/)
 - 📈 **Machine-Readable Metrics**: [`reports/modeling/metrics.json`](reports/modeling/metrics.json)
 
 ---
 
 ## 📂 Repository Structure
+
 ```
-SWYNEX-Data-Preparation/
+SWYNEX-Data-Science-Internship/
 ├── .github/workflows/
 │   └── test.yml                         # Automated CI testing pipeline (pytest)
 ├── data/
@@ -39,16 +100,23 @@ SWYNEX-Data-Preparation/
 ├── docs/
 │   └── DATA_DICTIONARY.md               # Clinical feature definitions & categories
 ├── notebooks/
+│   ├── 01_data_preparation.ipynb        # Task 1 Data Preparation Notebook
 │   ├── 02_exploratory_data_analysis.ipynb # Task 2 Main Interactive EDA Notebook
-│   └── 03_modeling_and_evaluation.ipynb # Task 3 Main Modeling & Evaluation Notebook
+│   ├── 03_modeling_and_evaluation.ipynb # Task 3 Main Modeling & Evaluation Notebook
+│   └── 04_final_data_science_case_study.ipynb # Task 4 Master End-to-End Case Study
 ├── reports/
+│   ├── final_case_study_report.md       # Task 4 Capstone Executive Analytical Report
+│   ├── figures/                         # Capstone 300-DPI visual artifacts
+│   │   ├── 01_eda_clinical_risk_drivers.png
+│   │   ├── 02_model_evaluation_diagnostics.png
+│   │   └── 03_top_feature_coefficients.png
 │   ├── eda/
-│   │   ├── eda_summary_report.md        # Executive Task 2 Analytical Report
-│   │   └── figures/                     # Exported 300-DPI EDA visual artifacts
+│   │   ├── eda_summary_report.md        # Task 2 Analytical Report
+│   │   └── figures/                     # Task 2 300-DPI figures
 │   └── modeling/
-│       ├── model_evaluation_report.md   # Executive Task 3 Modeling & Evaluation Report
-│       ├── metrics.json                 # Pinned machine-readable test set metrics
-│       └── figures/                     # Exported 300-DPI modeling figures
+│       ├── model_evaluation_report.md   # Task 3 Evaluation Report
+│       ├── metrics.json                 # Pinned test set performance metrics
+│       └── figures/                     # Task 3 300-DPI figures
 ├── scripts/
 │   ├── compute_eda_stats.py             # Empirical statistics calculation script
 │   ├── generate_eda_figures.py          # Automated EDA figure generation script
@@ -63,7 +131,7 @@ SWYNEX-Data-Preparation/
 │   ├── test_preprocessing.py            # Task 1 unit tests
 │   ├── test_eda.py                      # Task 2 EDA functions unit test suite
 │   └── test_modeling.py                 # Task 3 modeling pipeline & metrics unit tests
-├── SWYNEX_Data_Preparation.ipynb        # Task 1 Main Data Preparation Notebook
+├── SWYNEX_Data_Preparation.ipynb        # Task 1 Main Data Preparation Notebook (Root)
 ├── requirements.txt                     # Pinned project dependencies
 └── README.md                            # Comprehensive project documentation
 ```
@@ -97,8 +165,6 @@ Task 1 addressed extensive data quality challenges inherent to real-world health
 ### Objective
 Task 2 delivers an evidence-based exploratory evaluation of the prepared cohort to uncover patient sub-populations, test clinical hypotheses, evaluate severe class imbalance, and formulate strict data-leakage prevention guardrails for downstream machine learning.
 
-> **Note on Modeling Scope**: Task 2 is strictly descriptive and exploratory. It does not perform predictive model training or hyperparameter tuning.
-
 ```mermaid
 graph TD
     A[Cleaned Inpatient Dataset] --> B[Data Validation & Profiling]
@@ -108,26 +174,11 @@ graph TD
     E --> F[Bivariate Analysis Across Clinical Domains]
     F --> G[Inferential Hypothesis Testing]
     G --> H[Spearman Collinearity Heatmap]
-    H --> I[8 Evidence-Based Clinical Insights]
+    H --> I[Evidence-Based Clinical Insights]
     I --> J[Anti-Leakage Governance & Modeling Rules]
 ```
 
-### Key Analytical Findings & Verified Insights
-
-| # | Investigated Domain | Computed Empirical Evidence | Key Clinical & Modeling Finding |
-|---|---|---|---|
-| **1** | **Prior Inpatient Utilization** | Rate rises from **8.44%** (0 visits) to **12.92%** (1 visit), **20.29%** (3 visits), and **34.58%** (6 visits) ($U=401,064,764, p < 10^{-15}$). | Prior acute hospitalizations serve as the dominant leading indicator of 30-day early readmission. |
-| **2** | **Target Class Imbalance** | 30-day readmissions (`<30`) comprise only **11.16%** of encounters (11,357 of 101,763). | ~8:1 class imbalance invalidates raw accuracy (trivial null model achieves 88.84% accuracy). PR-AUC and cost-sensitive loss are mandatory. |
-| **3** | **Post-Acute Care Transfers** | Rehabilitation discharges had **27.71%** 30-day readmission; Skilled Nursing Facilities (SNF) had **14.66%**, vs **9.30%** for home discharges. | Transitional sub-acute destinations flag severe medical frailty and transitional care vulnerability. |
-| **4** | **Terminal Event Leakage** | 1,642 encounters resulted in inpatient death (`Expired`), all showing **0.00%** readmission. | **Mandatory Filtering Rule**: All expired encounters must be removed prior to model training to prevent target leakage. |
-| **5** | **Length of Stay & Medications** | Length of stay correlates moderately with medications ($\rho = 0.465, p < 10^{-15}$), but median stay differs by only 1 day (<30: 4.0 vs NO: 3.0 days). | Hospital duration reflects inpatient care intensity but cannot serve as a standalone risk predictor. |
-| **6** | **Glycemic Testing Adherence** | 84,745 encounters (**83.28%**) had no documented HbA1c test (`Not Tested`), showing **11.42%** readmissions vs **9.66%** for normal tested patients. | Omission of glycemic testing was pervasive in 1999–2008 and acts as a proxy for structured clinical care adherence. |
-| **7** | **Medication Titration** | Dosage adjustments (`change` = Ch) had **12.24%** readmissions vs **10.23%** for stable regimens ($\chi^2 = 215.94, p = 1.289 \times 10^{-47}$). | In-hospital medication titration flags acute unstable blood glucose requiring post-discharge outpatient stabilization. |
-| **8** | **Intra-Patient Clustering** | 101,763 encounters belong to 71,515 distinct patients (**29.72% repeat admissions**, up to 40 per patient). | Standard random train/test splits cause severe data leakage. Future validation must enforce **GroupKFold** on `patient_nbr`. |
-
----
-
-## 🧪 Inferential Statistical Testing Summary
+### Key Analytical Findings & Inferential Tests
 
 | Test Applied | Null Hypothesis ($H_0$) | Test Statistic | p-Value | Practical Interpretation |
 | :--- | :--- | :---: | :---: | :--- |
@@ -138,37 +189,7 @@ graph TD
 
 ---
 
-## 🛡️ Anti-Leakage Governance & Modeling Guardrails
-
-Before proceeding to Task 3 (Predictive Modeling), the following data governance requirements are established:
-1. **Exclude Expired Patients**: Remove 1,642 encounters where `discharge_disposition_id` $\in \{11, 19, 20, 21\}$.
-2. **Enforce Grouped Cross-Validation**: Split data strictly by `patient_nbr` using `GroupKFold` or `GroupShuffleSplit` to prevent patient records from leaking across folds.
-3. **Segregate Feature Timing**: Distinguish admission-time variables (demographics, prior visits) from pre-discharge variables (total stay, discharge destination).
-4. **Target Metric Selection**: Optimize models for **PR-AUC** and recall at calibrated risk cutoffs rather than raw accuracy.
-
----
-
-# 🤖 Task 3: Modeling and Evaluation
-
-### Objective & Problem Formulation
-Task 3 establishes an interpretable, reproducible machine learning baseline to predict **30-day early hospital readmission** for diabetic inpatients:
-- **Binary Target Formulation**:
-  - **Positive Class (`1`)**: `readmitted == '<30'` (11,357 encounters, **11.16%** base rate).
-  - **Negative Class (`0`)**: `readmitted` $\in$ `{NO, >30}` (90,406 encounters, **88.84%**).
-- **Clinical Meaning**: Predicts whether an encounter is followed by a recorded readmission within 30 days of discharge. `NO` indicates no recorded readmission within the monitored hospital system, not proof that the patient was never readmitted.
-
-```mermaid
-graph TD
-    A[Cleaned Inpatient Dataset: 101,763 rows] --> B[Feature Audit & Anti-Leakage Screening]
-    B -->|Drop IDs, target, discharge_disposition| C[43 Input Features]
-    C --> D[GroupShuffleSplit on patient_nbr: 80/20]
-    D --> E[Training Cohort: 81,670 rows / 57,212 patients]
-    D --> F[Held-Out Test Cohort: 20,093 rows / 14,303 patients]
-    E --> G[Scikit-Learn Pipeline: ColumnTransformer + LogisticRegression]
-    G --> H[Model Evaluation on Unseen Test Cohort]
-    F --> H
-    H --> I[Confusion Matrix, PR-AUC, ROC-AUC, Risk Drivers]
-```
+# 🤖 Task 3 & 4: Modeling, Evaluation & Final Case Study
 
 ### Strict Anti-Leakage Implementation
 1. **Patient-Grouped Holdout Split**: Encounters are partitioned strictly by `patient_nbr` using `GroupShuffleSplit(n_splits=1, test_size=0.20, random_state=42)`:
@@ -185,16 +206,7 @@ graph TD
 - **Baseline Benchmark**: `DummyClassifier(strategy='most_frequent')`.
 - **Primary Model**: `LogisticRegression(max_iter=1000, class_weight='balanced', random_state=42)`.
 
-### Empirical Test Set Results (Held-Out Test Cohort: N = 20,093)
-
-| Model Architecture | Accuracy | Precision | Recall (Sensitivity) | F1-Score | ROC-AUC | PR-AUC (Average Precision) |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **DummyClassifier** (Majority Class) | **89.08%** | 0.00% | 0.00% | 0.0000 | 0.5000 | 0.1092 |
-| **Balanced Logistic Regression** | **65.86%** | **16.48%** | **52.26%** | **0.2506** | **0.6435** | **0.1887** |
-
-> **Key Analytical Takeaway**: While the dummy classifier demonstrates deceptively high accuracy (89.08%), it fails to detect a single readmitted patient (Recall = 0.0%). Balanced Logistic Regression successfully identifies **52.26% of all true readmissions** (1,147 patients) and achieves a **+72.8% relative gain in PR-AUC** (0.1887 vs 0.1092 baseline).
-
-### Confusion Matrix Breakdown (Held-Out Test Cohort)
+### Detailed Confusion Matrix Breakdown (Held-Out Test Cohort: N = 20,093)
 
 | Metric | Count | Clinical & Operational Interpretation |
 | :--- | :---: | :--- |
@@ -202,8 +214,6 @@ graph TD
 | **False Positives (FP)** | **5,812** | False alarms; patients receive low-cost transitional check-ins (e.g., pharmacist phone calls). |
 | **False Negatives (FN)** | **1,048** | Readmissions missed by the linear baseline. |
 | **True Positives (TP)** | **1,147** | High-risk patients successfully flagged for discharge planning interventions. |
-
-- **Precision vs. Recall Trade-Off**: With ~10.9% test prevalence, `class_weight='balanced'` prioritizes sensitivity over precision. In hospital operations, a false alarm triggers a harmless, low-cost outreach, whereas a False Negative may leave a deteriorating patient unmonitored at home.
 
 ### Top Risk Drivers (Standardized Log-Odds Coefficients)
 - **`number_inpatient` ($\beta = +0.3517$)**: The strongest positive predictor. Prior hospitalizations significantly elevate readmission risk.
@@ -217,8 +227,8 @@ graph TD
 ### Environment Setup
 ```bash
 # Clone the repository
-git clone https://github.com/AbhijeetArunGore/SWYNEX-Data-Preparation.git
-cd SWYNEX-Data-Preparation
+git clone https://github.com/AbhijeetArunGore/SWYNEX-Data-Science-Internship.git
+cd SWYNEX-Data-Science-Internship
 
 # Install requirements
 pip install -r requirements.txt
@@ -226,8 +236,8 @@ pip install -r requirements.txt
 
 ### Run Complete Unit Test Suite
 ```bash
-# Run all 17 unit tests across Task 1, Task 2, and Task 3
-python -m pytest tests/
+# Run all 17 unit tests across Tasks 1, 2, and 3
+python -m pytest tests/ -v
 ```
 
 ### Generate Visual & Metric Artifacts
@@ -242,13 +252,16 @@ python scripts/generate_modeling_artifacts.py
 ### Execute Interactive Notebooks
 ```bash
 # Task 1: Data Preparation
-jupyter notebook SWYNEX_Data_Preparation.ipynb
+jupyter notebook notebooks/01_data_preparation.ipynb
 
 # Task 2: Exploratory Data Analysis
 jupyter notebook notebooks/02_exploratory_data_analysis.ipynb
 
 # Task 3: Modeling and Evaluation
 jupyter notebook notebooks/03_modeling_and_evaluation.ipynb
+
+# Task 4: Capstone Integrated Case Study
+jupyter notebook notebooks/04_final_data_science_case_study.ipynb
 ```
 
 ---
