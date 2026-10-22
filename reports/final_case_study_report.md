@@ -22,7 +22,7 @@ This capstone project delivers an end-to-end, reproducible, evidence-based data 
 - **Class Imbalance Context**: 30-day early readmissions (`<30`) comprise only **11.16%** of all encounters (**10.92%** of the held-out test cohort), creating an ~8:1 negative-to-positive class imbalance.
 - **The "Accuracy Trap" of Baseline Guessing**: A majority-class `DummyClassifier` achieves **89.08% accuracy**, yet produces a **Recall of 0.00%**, failing to identify even a single readmitted patient.
 - **Balanced Logistic Regression Performance**:
-  - **Recall (Sensitivity)**: **52.26%** — Successfully recovers **1,147 out of 2,195** true 30-day readmissions.
+  - **Recall (Sensitivity)**: **52.26%** — Identified **1,147 positive cases in the held-out test set at the selected threshold** (out of 2,195 true 30-day readmissions).
   - **Precision-Recall AUC (PR-AUC)**: **0.1887** — Represents a **+72.8% relative improvement** over the baseline test prevalence (0.1092).
   - **ROC-AUC**: **0.6435** — Demonstrates statistically significant ranking capacity above random chance (0.5000).
   - **Precision**: **16.48%** — Approximately 1 in 6 flagged encounters results in an early readmission.
@@ -101,7 +101,7 @@ To eliminate data leakage, all transformations are encapsulated in a scikit-lear
 
 | Metric | Baseline DummyClassifier | Balanced Logistic Regression | Delta / Practical Meaning |
 | :--- | :---: | :---: | :--- |
-| **Accuracy** | **89.08%** | **65.86%** | -23.22% (Intentional trade-off to recover minority class) |
+| **Accuracy** | **89.08%** | **65.86%** | -23.22% (Intentional trade-off to prioritize minority-class recall over overall accuracy) |
 | **Precision** | **0.00%** | **16.48%** | **+16.48%** (~1 in 6 flagged patients is truly readmitted) |
 | **Recall (Sensitivity)** | **0.00%** | **52.26%** | **+52.26%** (Detects **1,147 out of 2,195** true readmissions) |
 | **F1-Score** | **0.0000** | **0.2506** | **+0.2506** (Harmonic balance of precision and recall) |
@@ -202,4 +202,4 @@ While this model cannot make automated diagnostic decisions, it can serve as a *
 
 ---
 **Report Version**: 1.0 (Final Case Study Deliverable)  
-**Verification**: Verified against 17 unit tests and end-to-end execution of `notebooks/04_final_data_science_case_study.ipynb`.
+**Verification**: Verified against 31 automated unit tests and end-to-end execution of `notebooks/04_final_data_science_case_study.ipynb`.

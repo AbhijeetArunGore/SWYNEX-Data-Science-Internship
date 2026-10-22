@@ -1,13 +1,19 @@
-# Python
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+
+# Virtual Environments
 env/
 venv/
 .venv/
 ENV/
+env.bak/
+venv.bak/
+
+# Distribution / packaging
 build/
 develop-eggs/
 dist/
@@ -24,44 +30,46 @@ wheels/
 .installed.cfg
 *.egg
 
-# Jupyter
+# Jupyter Notebook checkpoints
 .ipynb_checkpoints
 *-checkpoint.ipynb
 
-# Testing & IDEs
+# Testing, Coverage & Profiling
 .pytest_cache/
 .coverage
 htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+
+# IDEs & Text Editors
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# OS & Environment
+# Operating System Files
 .DS_Store
 Thumbs.db
 ehthumbs.db
 desktop.ini
+
+# Logs & Debugging
 *.log
+
+# Environment Variables & Secrets
 .env
 .env.*
 *.env
-
-# Secrets & Credentials
-*secret*
-*credential*
+!.env.example
 *.pem
 *.key
 *.token
+*.cert
 
-# Local Submission Notes & Presentation Drafts (Keep local only)
+# Local Development Notes & Scratch Scripts
 notes/
-docs/LINKEDIN_*
-*LINKEDIN*
-*demo*
-*submission*
-
-# Scratch & Temporary Scripts
-scripts/build_*.py
 scratch/
 tmp/

@@ -135,7 +135,7 @@ Examining the model's standardized log-odds coefficients reveals the primary dri
 ## 9. Conclusion & Next Steps
 Task 3 successfully demonstrated the end-to-end implementation of a leak-free clinical classification pipeline. We proved that:
 - Standard classification accuracy is misleading on imbalanced healthcare datasets.
-- A balanced Logistic Regression model provides real, measurable utility, recovering **52.26% of early readmissions** and achieving a **+72.8% improvement in PR-AUC** over the majority-class baseline.
+- A balanced Logistic Regression model demonstrates clear discriminative utility over naive guessing, identifying **52.26% of positive cases in the held-out test set at the selected threshold (1,147 out of 2,195)** and achieving a **+72.8% relative gain in PR-AUC** over baseline test prevalence.
 - Patient-grouped splitting and deliberate leakage exclusion preserve evaluation integrity.
 
 ### Future Work:
