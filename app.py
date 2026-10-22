@@ -47,105 +47,11 @@ st.markdown("""
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
-    .disclaimer-banner {
-        background-color: #fffbeb;
-        border: 1px solid #fde68a;
-        border-left: 5px solid #d97706;
-        padding: 0.9rem 1.2rem;
-        border-radius: 6px;
-        margin-bottom: 1.4rem;
-        font-size: 0.88rem;
-        color: #92400e;
-        line-height: 1.45;
-    }
-
-    .header-box {
-        background-color: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 1.5rem 1.8rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .header-title {
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: #0f172a;
-        margin: 0;
-        line-height: 1.25;
-    }
-
-    .header-subtitle {
-        font-size: 0.96rem;
-        color: #475569;
-        margin-top: 0.4rem;
-        margin-bottom: 0;
-        line-height: 1.5;
-    }
-
-    .kpi-container {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 1.2rem;
-    }
-
-    .kpi-card {
-        flex: 1;
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
+    /* Metric cards spacing */
+    [data-testid="stMetric"] {
+        border: 1px solid rgba(128, 128, 128, 0.2);
+        padding: 0.8rem 1rem;
         border-radius: 8px;
-        padding: 1rem;
-        text-align: center;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-    }
-
-    .kpi-label {
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: #64748b;
-    }
-
-    .kpi-value {
-        font-size: 1.6rem;
-        font-weight: 700;
-        color: #0f172a;
-        margin-top: 2px;
-    }
-
-    .result-box-high {
-        background-color: #fef2f2;
-        border: 1px solid #fecaca;
-        border-left: 5px solid #dc2626;
-        padding: 1.2rem;
-        border-radius: 8px;
-        margin-bottom: 1rem;
-    }
-
-    .result-box-mod {
-        background-color: #fffbeb;
-        border: 1px solid #fde68a;
-        border-left: 5px solid #d97706;
-        padding: 1.2rem;
-        border-radius: 8px;
-        margin-bottom: 1rem;
-    }
-
-    .result-box-low {
-        background-color: #f0fdf4;
-        border: 1px solid #bbf7d0;
-        border-left: 5px solid #16a34a;
-        padding: 1.2rem;
-        border-radius: 8px;
-        margin-bottom: 1rem;
-    }
-
-    .table-container {
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        overflow: hidden;
-        margin-top: 0.8rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -189,36 +95,30 @@ metrics_json = get_metrics()
 # -----------------------------------------------------------------------------
 # Header & Explicit Clinical Prototype Disclaimer
 # -----------------------------------------------------------------------------
-st.markdown("""
-<div class="disclaimer-banner">
-    <strong>Educational & Research Prototype:</strong> This application is a retrospective data science prototype
-    developed using historical electronic health record data (1999–2008). It is <strong>not a clinically certified medical device</strong>,
-    is not calibrated for individual patient diagnosis or triage, and must not be used for clinical decision-making.
-</div>
-""", unsafe_allow_html=True)
+st.markdown(
+    "> ⚠️ **Educational & Research Prototype:** This application is a retrospective data science prototype "
+    "developed using historical electronic health record data (1999–2008). It is **not a clinically certified medical device**, "
+    "is not calibrated for individual patient diagnosis or triage, and must not be used for clinical decision-making."
+)
 
-st.markdown("""
-<div class="header-box">
-    <h1 class="header-title">Diabetes Inpatient 30-Day Readmission Risk Prototype</h1>
-    <p class="header-subtitle">
-        Retrospective risk estimation, imbalanced-class evaluation, and anti-leakage governance
-        analyzing <strong>101,763 diabetic inpatient encounters</strong> across 130 US hospitals.
-    </p>
-</div>
-""", unsafe_allow_html=True)
+st.markdown("# 🏥 Diabetes Inpatient 30-Day Readmission Risk Prototype")
+st.markdown(
+    "Retrospective risk estimation, imbalanced-class evaluation, and anti-leakage governance "
+    "analyzing **101,763 diabetic inpatient encounters** across 130 US hospitals."
+)
 
-# Top KPI Summary Cards
+# Top KPI Summary Cards (Native Streamlit Metrics - 100% Theme-Adaptive)
 kpi_c1, kpi_c2, kpi_c3, kpi_c4, kpi_c5 = st.columns(5)
 with kpi_c1:
-    st.markdown("""<div class="kpi-card"><div class="kpi-label">Analyzed Encounters</div><div class="kpi-value">101,763</div></div>""", unsafe_allow_html=True)
+    st.metric("Analyzed Encounters", "101,763")
 with kpi_c2:
-    st.markdown("""<div class="kpi-card"><div class="kpi-label">Unique Patients</div><div class="kpi-value">71,515</div></div>""", unsafe_allow_html=True)
+    st.metric("Unique Patients", "71,515")
 with kpi_c3:
-    st.markdown("""<div class="kpi-card"><div class="kpi-label">Test Base Rate</div><div class="kpi-value">10.92%</div></div>""", unsafe_allow_html=True)
+    st.metric("Test Base Rate", "10.92%")
 with kpi_c4:
-    st.markdown("""<div class="kpi-card"><div class="kpi-label">Test Recall (50% Thresh)</div><div class="kpi-value">52.26%</div></div>""", unsafe_allow_html=True)
+    st.metric("Test Recall (50% Thresh)", "52.26%")
 with kpi_c5:
-    st.markdown("""<div class="kpi-card"><div class="kpi-label">Patient Split Overlap</div><div class="kpi-value">0.00%</div></div>""", unsafe_allow_html=True)
+    st.metric("Patient Split Overlap", "0.00%")
 
 st.write("")
 
@@ -400,31 +300,33 @@ with tab_estimator:
             st.markdown("##### Risk Estimation Output")
             if pred_results:
                 tier = pred_results['tier_level']
-                box_class = (
-                    "result-box-high" if tier == "high"
-                    else "result-box-mod" if tier == "moderate"
-                    else "result-box-low"
-                )
+                prob_pct = pred_results['probability_percent']
+                tier_title = pred_results['risk_tier']
+                tier_desc = pred_results['tier_description']
 
-                st.markdown(f"""
-                <div class="{box_class}">
-                    <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
-                        {pred_results['risk_tier']}
-                    </div>
-                    <div style="font-size: 2.4rem; font-weight: 800; margin: 4px 0;">
-                        {pred_results['probability_percent']}%
-                    </div>
-                    <div style="font-size: 0.88rem; color: #334155;">
-                        Estimated Statistical Risk of 30-Day Readmission
-                    </div>
-                    <hr style="margin: 8px 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);"/>
-                    <div style="font-size: 0.82rem; line-height: 1.45;">
-                        {pred_results['tier_description']}
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+                if tier == "high":
+                    st.error(
+                        f"### 🚨 {tier_title}\n\n"
+                        f"# **{prob_pct}%**\n\n"
+                        f"**Estimated Statistical Risk of 30-Day Readmission**\n\n"
+                        f"{tier_desc}"
+                    )
+                elif tier == "moderate":
+                    st.warning(
+                        f"### ⚠️ {tier_title}\n\n"
+                        f"# **{prob_pct}%**\n\n"
+                        f"**Estimated Statistical Risk of 30-Day Readmission**\n\n"
+                        f"{tier_desc}"
+                    )
+                else:
+                    st.success(
+                        f"### ✅ {tier_title}\n\n"
+                        f"# **{prob_pct}%**\n\n"
+                        f"**Estimated Statistical Risk of 30-Day Readmission**\n\n"
+                        f"{tier_desc}"
+                    )
 
-                st.warning(f"ℹ️ **Calibration Note**: {pred_results['calibration_note']}")
+                st.info(f"ℹ️ **Calibration Note**: {pred_results['calibration_note']}")
 
                 st.markdown("###### Primary Model Feature Factors for this Profile:")
                 for factor in pred_results['risk_factors']:
@@ -616,9 +518,7 @@ with tab_governance:
 # Neutral Professional Footer
 # -----------------------------------------------------------------------------
 st.write("---")
-st.markdown("""
-<div style="text-align: center; color: #64748b; font-size: 0.82rem; padding: 0.8rem 0;">
-    Diabetes Inpatient 30-Day Readmission Risk Prototype • Educational & Research Benchmark<br/>
-    Repository: <code>SWYNEX-Data-Science-Internship</code> • Python 3.12 • Scikit-Learn 1.6 • Streamlit
-</div>
-""", unsafe_allow_html=True)
+st.caption(
+    "Diabetes Inpatient 30-Day Readmission Risk Prototype • Educational & Research Benchmark • "
+    "Repository: SWYNEX-Data-Science-Internship • Python 3.12 • Scikit-Learn 1.6 • Streamlit"
+)
